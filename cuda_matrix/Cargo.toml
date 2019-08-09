@@ -9,6 +9,3 @@ ptx-builder = "0.5"
 
 [target.'cfg(target_os = "cuda")'.dependencies]
 ptx-support = { git  = "https://github.com/denzp/rust-ptx-support" }
-
-[dependencies.common]
-path = "../common"

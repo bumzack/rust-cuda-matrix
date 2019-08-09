@@ -68,14 +68,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "common"
-version = "0.1.0"
-
-[[package]]
-name = "cuda_kernel_mandel"
+name = "cuda_matrix"
 version = "0.1.0"
 dependencies = [
- "common 0.1.0",
  "ptx-builder 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "ptx-support 0.1.0 (git+https://github.com/denzp/rust-ptx-support)",
 ]
