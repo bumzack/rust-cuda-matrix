@@ -1,0 +1,18 @@
+[package]
+name = "mandelbrot"
+version = "0.1.0"
+authors = ["bumzack <bumzacktrara@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+image = "*"
+
+rustacuda = { path = "../RustaCUDA" }
+rustacuda_derive = { path = "../RustaCUDA/rustacuda_derive/" }
+rustacuda_core = { path = "../RustaCUDA/rustacuda_core/" }
+
+
+
+[dependencies.common]
+path = "./common"
+
