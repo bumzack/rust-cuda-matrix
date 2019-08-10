@@ -90,27 +90,34 @@ pub unsafe extern "ptx-kernel" fn matrix_mul(
         (Context::thread().index().x + Context::block().index().x * block_dim_x as u64) as isize;
     let row =
         (Context::thread().index().y + Context::block().index().y * block_dim_y as u64) as isize;
-    let idx = row * mat_a_col as isize + col;
-
-//    cuda_printf!(
-//        "YYYYYYYY  col = %ul,  row = %ul,  idx = %ul \n",
-//        col as u32,
-//        row as u32,
-//        idx as u32
-//    );
+    let idx = row * mat_b_col as isize + col;
+    // row * mat_b_col + col
+    //    cuda_printf!(
+    //        "YYYYYYYY  col = %ul,  row = %ul,  idx = %ul \n",
+    //        col as u32,
+    //        row as u32,
+    //        idx as u32
+    //    );
 
     if col < mat_b_col as isize && row < mat_a_row as isize {
         let mut tmp = 0f32;
         for i in 0..mat_a_col {
             let idx_a = row * mat_a_col as isize + i as isize;
-            let idx_b = row + i as isize * mat_b_col as isize;
-            cuda_printf!(
-                "XXXXXX col = %ul,  row = %ul,  idx_a = %ul,   idx_b = %ul  \n",
-                col as u32,
-                row as u32,
-                idx_a as u32,
-                idx_b as u32
-            );
+            let idx_b = col + i as isize * mat_b_col as isize;
+
+            //   let idx_a = i + row * mat_a_col;
+            //   let idx_b = i * mat_b_col + col;
+
+            //            if col == 3 && row == 4 {
+            //                cuda_printf!(
+            //                "XXXXXX col = %ul,  row = %ul,  idx_a = %ul,   idx_b = %ul  \n",
+            //                col as u32,
+            //                row as u32,
+            //                idx_a as u32,
+            //                idx_b as u32
+            //            );
+            //       }
+
             tmp = tmp + *mat_a.offset(idx_a) * *mat_b.offset(idx_b);
         }
         *mat_c.offset(idx) = tmp;

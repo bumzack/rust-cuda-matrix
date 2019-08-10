@@ -366,7 +366,7 @@ fn mul_matrix() -> Result<(), Box<dyn Error>> {
     }
 
     for x in 0..res_cpu.len() {
-        // assert_eq!(res_cpu[x], out_host[x]);
+        assert_eq!(res_cpu[x], out_host[x]);
     }
     // The kernel launch is asynchronous, so we wait for the kernel to finish executing
 
@@ -400,7 +400,9 @@ fn mul_matrix_cpu(
             for i in 0..mat_a_col {
                 let idx_a = i + row * mat_a_col;
                 let idx_b = i * mat_b_col + col;
-                //           println!("idx_a = {}, idx_b = {},    a.len = {},   b.len = {} ", idx_a, idx_b, a.len(), b.len() );
+                //                if col == 3 && row == 4 {
+                //                    println!("idx_a = {}, idx_b = {},    a.len = {},   b.len = {} ", idx_a, idx_b, a.len(), b.len() );
+                //                }
                 tmp = tmp + a[idx_a] * b[idx_b];
             }
             res[row * mat_b_col + col] = tmp;
