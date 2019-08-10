@@ -37,7 +37,7 @@ pub unsafe extern "ptx-kernel" fn printThreadIndex(
 
 #[no_mangle]
 #[cfg(target_os = "cuda")]
-pub unsafe extern "ptx-kernel" fn sumMatrixOnGpu2D(
+pub unsafe extern "ptx-kernel" fn sumMatrixOnGpu2D2D(
     mat_a: *const f32,
     mat_b: *const f32,
     mat_c: *mut f32,
@@ -63,9 +63,38 @@ pub unsafe extern "ptx-kernel" fn sumMatrixOnGpu2D(
     //            ix as u32, iy as u32, idx as u32, *mat_a.offset(idx as isize) as f64,  *mat_b.offset(idx as isize) as f64,  *mat_c.offset(idx as isize) as f64);
 }
 
+
 #[no_mangle]
 #[cfg(target_os = "cuda")]
-pub unsafe extern "ptx-kernel" fn matrix_mul(
+pub unsafe extern "ptx-kernel" fn sumMatrixOnGpu2D1D(
+    mat_a: *const f32,
+    mat_b: *const f32,
+    mat_c: *mut f32,
+    nx: usize,
+    ny: usize,
+    block_dim_x: u32,
+    block_dim_y: u32,
+) {
+    use ptx_support::prelude::*;
+
+    let ix =
+        (Context::thread().index().x + Context::block().index().x * block_dim_x as u64) as isize;
+    let iy =  Context::block().index().y as isize;
+    let idx = iy * nx as isize + ix;
+    if ix < nx as isize && iy < ny as isize {
+        *mat_c.offset(idx) = *mat_a.offset(idx) + *mat_b.offset(idx);
+    }
+
+    //    cuda_printf!("thread_id (%ul, %ul)   block_id (%ul, %ul)   coordinate (%ul, %ul)    global_idx %ul,    a =  %f, b = %f, c = %f\n",
+    //            Context::thread().index().x as u32, Context::thread().index().y as u32,
+    //            Context::block().index().x as u32 ,  Context::block().index().y as u32,
+    //            ix as u32, iy as u32, idx as u32, *mat_a.offset(idx as isize) as f64,  *mat_b.offset(idx as isize) as f64,  *mat_c.offset(idx as isize) as f64);
+}
+
+
+#[no_mangle]
+#[cfg(target_os = "cuda")]
+pub unsafe extern "ptx-kernel" fn matrix_mul_2D2D(
     mat_a: *const f32,
     mat_b: *const f32,
     mat_c: *mut f32,
@@ -75,12 +104,12 @@ pub unsafe extern "ptx-kernel" fn matrix_mul(
     mat_b_col: usize,
     block_dim_x: u32,
     block_dim_y: u32,
-    // TODO: add succes boolean as reutn value
+    // TODO: add succes boolean as return value
     // success: *mut bool,
 ) {
     use ptx_support::prelude::*;
 
-    if (mat_a_col != mat_b_row) {
+    if mat_a_col != mat_b_row {
         //     *success = false;
         return;
     }
@@ -128,5 +157,92 @@ pub unsafe extern "ptx-kernel" fn matrix_mul(
     //            Context::block().index().x as u32 ,  Context::block().index().y as u32,
     //            ix as u32, iy as u32, idx as u32, *mat_a.offset(idx as isize) as f64,  *mat_b.offset(idx as isize) as f64,  *mat_c.offset(idx as isize) as f64);
 }
+
+
+
+#[no_mangle]
+#[cfg(target_os = "cuda")]
+pub unsafe extern "ptx-kernel" fn matrix_mul_2D1D(
+    mat_a: *const f32,
+    mat_b: *const f32,
+    mat_c: *mut f32,
+    mat_a_row: usize,
+    mat_a_col: usize,
+    mat_b_row: usize,
+    mat_b_col: usize,
+    block_dim_x: u32,
+    block_dim_y: u32,
+    // TODO: add succes boolean as reutn value
+    // success: *mut bool,
+) {
+    use ptx_support::prelude::*;
+
+    if mat_a_col != mat_b_row {
+        //     *success = false;
+        return;
+    }
+    //    *success = true;
+
+    let col =
+        (Context::thread().index().x + Context::block().index().x * block_dim_x as u64) as isize;
+    let row = Context::block().index().y  as isize;
+    let idx = row * mat_b_col as isize + col;
+    // row * mat_b_col + col
+    //    cuda_printf!(
+    //        "YYYYYYYY  col = %ul,  row = %ul,  idx = %ul \n",
+    //        col as u32,
+    //        row as u32,
+    //        idx as u32
+    //    );
+
+    if col < mat_b_col as isize && row < mat_a_row as isize {
+        let mut tmp = 0f32;
+        for i in 0..mat_a_col {
+            let idx_a = row * mat_a_col as isize + i as isize;
+            let idx_b = col + i as isize * mat_b_col as isize;
+
+            //   let idx_a = i + row * mat_a_col;
+            //   let idx_b = i * mat_b_col + col;
+
+            //            if col == 3 && row == 4 {
+            //                cuda_printf!(
+            //                "XXXXXX col = %ul,  row = %ul,  idx_a = %ul,   idx_b = %ul  \n",
+            //                col as u32,
+            //                row as u32,
+            //                idx_a as u32,
+            //                idx_b as u32
+            //            );
+            //       }
+
+            tmp = tmp + *mat_a.offset(idx_a) * *mat_b.offset(idx_b);
+        }
+        *mat_c.offset(idx) = tmp;
+    }
+
+    //    cuda_printf!("thread_id (%ul, %ul)   block_id (%ul, %ul)   coordinate (%ul, %ul)    global_idx %ul,    a =  %f, b = %f, c = %f\n",
+    //            Context::thread().index().x as u32, Context::thread().index().y as u32,
+    //            Context::block().index().x as u32 ,  Context::block().index().y as u32,
+    //            ix as u32, iy as u32, idx as u32, *mat_a.offset(idx as isize) as f64,  *mat_b.offset(idx as isize) as f64,  *mat_c.offset(idx as isize) as f64);
+}
+
+
+__global__ void transposeUnroll4Col(float *out, float *in, const int nx,
+const int ny)
+{
+unsigned int ix = blockDim.x * blockIdx.x * 4 + threadIdx.x;
+unsigned int iy = blockDim.y * blockIdx.y + threadIdx.y;
+
+unsigned int ti = iy * nx + ix; // access in rows
+unsigned int to = ix * ny + iy; // access in columns
+
+if (ix + 3 * blockDim.x < nx && iy < ny)
+{
+out[ti]                = in[to];
+out[ti +   blockDim.x] = in[to +   blockDim.x * ny];
+out[ti + 2 * blockDim.x] = in[to + 2 * blockDim.x * ny];
+out[ti + 3 * blockDim.x] = in[to + 3 * blockDim.x * ny];
+}
+}
+
 
 fn main() {}
