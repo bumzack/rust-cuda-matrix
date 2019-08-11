@@ -1,6 +1,5 @@
-use std::fmt;
 use crate::matrix::matrix::Matrix;
-
+use std::fmt;
 
 #[derive(Debug)]
 pub struct CpuMatrix {
@@ -15,7 +14,8 @@ impl fmt::Display for CpuMatrix {
         write!(
             f,
             "\nCPU Matrix \nrows: {}, cols: {}\n",
-            self.get_rows(), self.get_cols()
+            self.get_rows(),
+            self.get_cols()
         )?;
         for row in 0..self.get_rows() {
             for col in 0..self.get_cols() {
@@ -52,7 +52,7 @@ impl Matrix<CpuMatrix> for CpuMatrix {
         m
     }
 
-    fn from(data: Vec<f32>, rows: usize, cols: usize) -> CpuMatrix {
+    fn from_vec(data: Vec<f32>, rows: usize, cols: usize) -> CpuMatrix {
         assert_eq!(data.len(), rows * cols);
         CpuMatrix {
             rows: rows,
@@ -61,11 +61,12 @@ impl Matrix<CpuMatrix> for CpuMatrix {
         }
     }
 
-    fn set(&mut self, row: usize, col: usize, value: f32) {
+    fn set(&mut  self, row: usize, col: usize, value: f32) {
         self.data[row * self.cols + col] = value;
     }
 
-    fn get(&self, row: usize, col: usize) -> f32 {
+    // mut is required for CudaMatrix
+    fn get(&  self, row: usize, col: usize) -> f32 {
         self.data[row * self.cols + col]
     }
 
@@ -78,3 +79,12 @@ impl Matrix<CpuMatrix> for CpuMatrix {
     }
 }
 
+impl CpuMatrix {
+    pub fn get_data(&self) -> &Vec<f32> {
+        &self.data
+    }
+
+    pub fn get_data_mut(&mut self) -> &mut Vec<f32> {
+        &mut self.data
+    }
+}

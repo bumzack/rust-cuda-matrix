@@ -6,7 +6,7 @@
 use crate::matrix::matrix::Matrix;
 
 pub trait Backend<T, M: Matrix<T>> {
-     fn add(&self, a: &M, b: &M) -> M;
+    fn add(&self, a: &mut  M, b: &mut  M) -> M;
     fn invert(&self, a: &M, b: &M) -> M;
     fn mul(&self, a: &M, b: &M) -> M;
 
