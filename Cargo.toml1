@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "cuda_matrix",
+    "test_cuda_matrix",
+]

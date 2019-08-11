@@ -1,11 +1,8 @@
 use std::error::Error;
 use std::ffi::CString;
-use std::time::Instant;
+use crate::utils::cuda_utils::show_device_props;
 
-use crate::cuda_utils::show_device_props;
-use rustacuda::device::DeviceAttribute;
-use rustacuda::prelude::*;
-use crate::PTX_CODE;
+ use rustacuda::prelude::*;
 
 pub fn test_matrix() -> Result<(), Box<dyn Error>> {
     // Initialize the CUDA API
@@ -36,8 +33,9 @@ pub fn test_matrix() -> Result<(), Box<dyn Error>> {
 
     let mut d_matrix = DeviceBuffer::from_slice(&matrix)?;
 
+    // println!("include_str!(env!(KERNEL_PTX_PATH)) = {}", include_str!(env!("KERNEL_PTX_PATH")));
     // Load the module containing the function we want to call
-    let module_data = CString::new(PTX_CODE)?;
+    let module_data = CString::new(include_str!(env!("KERNEL_PTX_PATH")))?;
     let module = Module::load_from_string(&module_data)?;
 
     // Create a stream to submit work to

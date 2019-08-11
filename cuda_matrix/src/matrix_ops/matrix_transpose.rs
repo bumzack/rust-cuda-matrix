@@ -1,9 +1,8 @@
 use std::error::Error;
 use std::ffi::CString;
 use std::time::Instant;
-use crate::PTX_CODE;
 
-use crate::matrix_utils::print_matrix;
+use crate::utils::matrix_utils::print_matrix;
 use rustacuda::prelude::*;
 
 fn transpose_matrix_row_2D2D() -> Result<(), Box<dyn Error>> {
@@ -35,8 +34,9 @@ fn transpose_matrix_row_2D2D() -> Result<(), Box<dyn Error>> {
     let mut d_matrix_a = DeviceBuffer::from_slice(&matrix_a)?;
     let mut d_matrix_b = DeviceBuffer::from_slice(&matrix_b)?;
 
+    // println!("include_str!(env!(KERNEL_PTX_PATH)) = {}", include_str!(env!("KERNEL_PTX_PATH")));
     // Load the module containing the function we want to call
-    let module_data = CString::new(PTX_CODE)?;
+    let module_data = CString::new(include_str!(env!("KERNEL_PTX_PATH")))?;
     let module = Module::load_from_string(&module_data)?;
 
     // Create a stream to submit work to
@@ -149,7 +149,7 @@ fn transpose_matrix_col_2D2D() -> Result<(), Box<dyn Error>> {
     let mut d_matrix_b = DeviceBuffer::from_slice(&matrix_b)?;
 
     // Load the module containing the function we want to call
-    let module_data = CString::new(PTX_CODE)?;
+    let module_data = CString::new(include_str!(env!("KERNEL_PTX_PATH")))?;
     let module = Module::load_from_string(&module_data)?;
 
     // Create a stream to submit work to
@@ -260,7 +260,7 @@ fn transpose_matrix_col_2D2D() -> Result<(), Box<dyn Error>> {
 //    let mut d_matrix_b = DeviceBuffer::from_slice(&matrix_b)?;
 //
 //    // Load the module containing the function we want to call
-//    let module_data = CString::new(PTX_CODE)?;
+//    let module_data = CString::new(include_str!(env!("KERNEL_PTX_PATH")))?;
 //    let module = Module::load_from_string(&module_data)?;
 //
 //    // Create a stream to submit work to
