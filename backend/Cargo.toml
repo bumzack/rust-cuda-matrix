@@ -1,10 +1,8 @@
 [package]
-name = "rust-cuda-matrix"
+name = "backend"
 version = "0.1.0"
 authors = ["bumzack <bumzacktrara@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-cuda-matrix = { path = "../cuda_matrix" }
-backend = { path = "../backend" }
-
+rustacuda = { path = "../../RustaCUDA" }
