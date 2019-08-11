@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::ffi::CString;
 use std::time::Instant;
+use crate::PTX_CODE;
 
 use rustacuda::prelude::*;
 
@@ -39,7 +40,7 @@ pub fn add_matrix_2D2D() -> Result<(), Box<dyn Error>> {
     let mut d_matrix_c = DeviceBuffer::from_slice(&matrix_c)?;
 
     // Load the module containing the function we want to call
-    let module_data = CString::new(include_str!("/tmp/ptx-builder-0.5/cuda_matrix/9132ac0994b05664/nvptx64-nvidia-cuda/release/cuda_matrix.ptx"))?;
+    let module_data = CString::new(PTX_CODE)?;
     let module = Module::load_from_string(&module_data)?;
 
     // Create a stream to submit work to
@@ -137,7 +138,7 @@ pub fn add_matrix_2D1D() -> Result<(), Box<dyn Error>> {
     let mut d_matrix_c = DeviceBuffer::from_slice(&matrix_c)?;
 
     // Load the module containing the function we want to call
-    let module_data = CString::new(include_str!("/tmp/ptx-builder-0.5/cuda_matrix/9132ac0994b05664/nvptx64-nvidia-cuda/release/cuda_matrix.ptx"))?;
+    let module_data = CString::new(PTX_CODE)?;
     let module = Module::load_from_string(&module_data)?;
 
     // Create a stream to submit work to

@@ -5,6 +5,7 @@ use std::time::Instant;
 use crate::cuda_utils::show_device_props;
 use rustacuda::device::DeviceAttribute;
 use rustacuda::prelude::*;
+use crate::PTX_CODE;
 
 pub fn test_matrix() -> Result<(), Box<dyn Error>> {
     // Initialize the CUDA API
@@ -36,7 +37,7 @@ pub fn test_matrix() -> Result<(), Box<dyn Error>> {
     let mut d_matrix = DeviceBuffer::from_slice(&matrix)?;
 
     // Load the module containing the function we want to call
-    let module_data = CString::new(include_str!("/tmp/ptx-builder-0.5/cuda_matrix/9132ac0994b05664/nvptx64-nvidia-cuda/release/cuda_matrix.ptx"))?;
+    let module_data = CString::new(PTX_CODE)?;
     let module = Module::load_from_string(&module_data)?;
 
     // Create a stream to submit work to

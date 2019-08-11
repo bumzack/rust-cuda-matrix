@@ -1,9 +1,10 @@
 use std::error::Error;
 use std::ffi::CString;
 use std::time::Instant;
+use crate::PTX_CODE;
 
-use rustacuda::prelude::*;
 use crate::matrix_utils::print_matrix;
+use rustacuda::prelude::*;
 
 fn transpose_matrix_row_2D2D() -> Result<(), Box<dyn Error>> {
     // Initialize the CUDA API
@@ -35,7 +36,7 @@ fn transpose_matrix_row_2D2D() -> Result<(), Box<dyn Error>> {
     let mut d_matrix_b = DeviceBuffer::from_slice(&matrix_b)?;
 
     // Load the module containing the function we want to call
-    let module_data = CString::new(include_str!("/tmp/ptx-builder-0.5/cuda_matrix/9132ac0994b05664/nvptx64-nvidia-cuda/release/cuda_matrix.ptx"))?;
+    let module_data = CString::new(PTX_CODE)?;
     let module = Module::load_from_string(&module_data)?;
 
     // Create a stream to submit work to
@@ -98,11 +99,7 @@ fn transpose_matrix_row_2D2D() -> Result<(), Box<dyn Error>> {
 
     let start_cpu = Instant::now();
 
-    let res_cpu = transpose_matrix_cpu(
-        &matrix_a,
-        mat_a_col,
-        mat_a_row,
-    );
+    let res_cpu = transpose_matrix_cpu(&matrix_a, mat_a_col, mat_a_row);
     let duration_cpu = start_cpu.elapsed();
 
     //    println!("result cpu  ");
@@ -152,7 +149,7 @@ fn transpose_matrix_col_2D2D() -> Result<(), Box<dyn Error>> {
     let mut d_matrix_b = DeviceBuffer::from_slice(&matrix_b)?;
 
     // Load the module containing the function we want to call
-    let module_data = CString::new(include_str!("/tmp/ptx-builder-0.5/cuda_matrix/9132ac0994b05664/nvptx64-nvidia-cuda/release/cuda_matrix.ptx"))?;
+    let module_data = CString::new(PTX_CODE)?;
     let module = Module::load_from_string(&module_data)?;
 
     // Create a stream to submit work to
@@ -212,11 +209,7 @@ fn transpose_matrix_col_2D2D() -> Result<(), Box<dyn Error>> {
     print_matrix(&out_host, mat_b_row, mat_b_col);
 
     let start_cpu = Instant::now();
-    let res_cpu = transpose_matrix_cpu(
-        &matrix_a,
-        mat_a_col,
-        mat_a_row,
-    );
+    let res_cpu = transpose_matrix_cpu(&matrix_a, mat_a_col, mat_a_row);
     let duration_cpu = start_cpu.elapsed();
 
     println!("result cpu  ");
@@ -267,7 +260,7 @@ fn transpose_matrix_col_2D2D() -> Result<(), Box<dyn Error>> {
 //    let mut d_matrix_b = DeviceBuffer::from_slice(&matrix_b)?;
 //
 //    // Load the module containing the function we want to call
-//    let module_data = CString::new(include_str!("/tmp/ptx-builder-0.5/cuda_matrix/9132ac0994b05664/nvptx64-nvidia-cuda/release/cuda_matrix.ptx"))?;
+//    let module_data = CString::new(PTX_CODE)?;
 //    let module = Module::load_from_string(&module_data)?;
 //
 //    // Create a stream to submit work to
@@ -358,12 +351,7 @@ fn transpose_matrix_col_2D2D() -> Result<(), Box<dyn Error>> {
 //    Ok(())
 //}
 
-
-fn transpose_matrix_cpu(
-    a: &Vec<f32>,
-    mat_a_col: usize,
-    mat_a_row: usize,
-) -> Vec<f32> {
+fn transpose_matrix_cpu(a: &Vec<f32>, mat_a_col: usize, mat_a_row: usize) -> Vec<f32> {
     let mut res: Vec<f32> = vec![0f32; mat_a_col * mat_a_row];
 
     println!("res.len() = {}", res.len());
@@ -376,4 +364,3 @@ fn transpose_matrix_cpu(
     }
     res
 }
-

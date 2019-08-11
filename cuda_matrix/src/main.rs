@@ -98,14 +98,14 @@ pub unsafe extern "ptx-kernel" fn matrix_mul_2D2D(
     use ptx_support::prelude::*;
 
     if mat_a_col != mat_b_row {
-               return;
+        return;
     }
     let col =
         (Context::thread().index().x + Context::block().index().x * block_dim_x as u64) as isize;
     let row =
         (Context::thread().index().y + Context::block().index().y * block_dim_y as u64) as isize;
     let idx = row * mat_b_col as isize + col;
-        if col < mat_b_col as isize && row < mat_a_row as isize {
+    if col < mat_b_col as isize && row < mat_a_row as isize {
         let mut tmp = 0f32;
         for i in 0..mat_a_col {
             let idx_a = row * mat_a_col as isize + i as isize;
@@ -128,7 +128,7 @@ pub unsafe extern "ptx-kernel" fn matrix_mul_2D1D(
     mat_b_col: usize,
     block_dim_x: u32,
     block_dim_y: u32,
-    // TODO add succes boolean as reutn value
+    // TODO add succes boolean as return value
     // success: *mut bool,
 ) {
     use ptx_support::prelude::*;
@@ -140,12 +140,12 @@ pub unsafe extern "ptx-kernel" fn matrix_mul_2D1D(
         (Context::thread().index().x + Context::block().index().x * block_dim_x as u64) as isize;
     let row = Context::block().index().y as isize;
     let idx = row * mat_b_col as isize + col;
-        if col < mat_b_col as isize && row < mat_a_row as isize {
+    if col < mat_b_col as isize && row < mat_a_row as isize {
         let mut tmp = 0f32;
         for i in 0..mat_a_col {
             let idx_a = row * mat_a_col as isize + i as isize;
             let idx_b = col + i as isize * mat_b_col as isize;
-        tmp = tmp + *mat_a.offset(idx_a) * *mat_b.offset(idx_b);
+            tmp = tmp + *mat_a.offset(idx_a) * *mat_b.offset(idx_b);
         }
         *mat_c.offset(idx) = tmp;
     }
@@ -160,7 +160,7 @@ pub unsafe extern "ptx-kernel" fn matrix_mul_2D1D(
 //    mat_a_row: usize,
 //    block_dim_x: u32,
 //    block_dim_y: u32,
-//    // TODO.md: add succes boolean as reutn value
+//    // TODO.md: add succes boolean as return value
 //    // success: *mut bool,
 //) {
 //    use ptx_support::prelude::*;
@@ -185,7 +185,7 @@ pub unsafe extern "ptx-kernel" fn matrix_mul_2D1D(
 //    mat_a_row: usize,
 //    block_dim_x: u32,
 //    block_dim_y: u32,
-//    // TODO add succes boolean as reutn value
+//    // TODO add succes boolean as return value
 //) {
 //    use ptx_support::prelude::*;
 //
@@ -212,7 +212,7 @@ pub unsafe extern "ptx-kernel" fn matrix_mul_2D1D(
 //    ny: usize,
 //    block_dim_x: u32,
 //    block_dim_y: u32,
-//    // TODO.md: add succes boolean as reutn value
+//    // TODO.md: add succes boolean as return value
 //    // success: *mut bool,
 //) {
 //    use ptx_support::prelude::*;
@@ -236,5 +236,128 @@ pub unsafe extern "ptx-kernel" fn matrix_mul_2D1D(
 //    }
 //}
 
+// inversion based on this code
+// https://github.com/ZhengzhongSun/Matrix-Inversion-with-CUDA/blob/master/matrixInversion_gpu.cu
+
+#[no_mangle]
+#[cfg(target_os = "cuda")]
+pub unsafe extern "ptx-kernel" fn nodiag_normalize(
+    mat_a: *mut f32,
+    mat_i: *mut f32,
+    n: usize,
+    i: usize,
+    block_dim_x: u32,
+    block_dim_y: u32,
+    // TODO add succes boolean as return value
+    // success: *mut bool,
+) {
+    use ptx_support::prelude::*;
+
+    let n = n as isize;
+    let i = i as isize;
+    let x =
+        (Context::thread().index().x + Context::block().index().x * block_dim_x as u64) as isize;
+    let y =
+        (Context::thread().index().y + Context::block().index().y * block_dim_y as u64) as isize;
+
+    if x < n && y < n {
+        if (x == i) && (x != y) {
+            *mat_i.offset(x * n + y) = *mat_i.offset(x * n + y) / *mat_a.offset(i * n + i);
+            *mat_a.offset(x * n + y) = *mat_a.offset(x * n + y) / *mat_a.offset(i * n + i);
+        }
+    }
+}
+
+#[no_mangle]
+#[cfg(target_os = "cuda")]
+pub unsafe extern "ptx-kernel" fn diag_normalize(
+    mat_a: *mut f32,
+    mat_i: *mut f32,
+    n: usize,
+    i: usize,
+    block_dim_x: u32,
+    block_dim_y: u32,
+    // TODO add succes boolean as return value
+    // success: *mut bool,
+) {
+    use ptx_support::prelude::*;
+
+    let n = n as isize;
+    let i = i as isize;
+    let x =
+        (Context::thread().index().x + Context::block().index().x * block_dim_x as u64) as isize;
+    let y =
+        (Context::thread().index().y + Context::block().index().y * block_dim_y as u64) as isize;
+
+    if x < n && y < n {
+        if (x == y) && (x == i) {
+            *mat_i.offset(x * n + y) = *mat_i.offset(x * n + y) / *mat_a.offset(i * n + i);
+            *mat_a.offset(x * n + y) = *mat_a.offset(x * n + y) / *mat_a.offset(i * n + i);
+        }
+    }
+}
+
+#[no_mangle]
+#[cfg(target_os = "cuda")]
+pub unsafe extern "ptx-kernel" fn gaussjordan(
+    mat_a: *mut f32,
+    mat_i: *mut f32,
+    n: usize,
+    i: usize,
+    block_dim_x: u32,
+    block_dim_y: u32,
+    // TODO add succes boolean as return value
+    // success: *mut bool,
+) {
+    use ptx_support::prelude::*;
+
+    let n = n as isize;
+    let i = i as isize;
+    let x =
+        (Context::thread().index().x + Context::block().index().x * block_dim_x as u64) as isize;
+    let y =
+        (Context::thread().index().y + Context::block().index().y * block_dim_y as u64) as isize;
+
+    if x < n && y < n {
+        if (x != i) {
+            *mat_i.offset(x * n + y) =
+                *mat_i.offset(x * n + y) - *mat_i.offset(i * n + y) * *mat_a.offset(x * n + i);
+            if y != i {
+                *mat_a.offset(x * n + y) =
+                    *mat_a.offset(x * n + y) - *mat_a.offset(i * n + y) * *mat_a.offset(x * n + i);
+            }
+        }
+    }
+}
+
+#[no_mangle]
+#[cfg(target_os = "cuda")]
+pub unsafe extern "ptx-kernel" fn set_zero(
+    mat_a: *mut f32,
+    mat_i: *mut f32,
+    n: usize,
+    i: usize,
+    block_dim_x: u32,
+    block_dim_y: u32,
+    // TODO add succes boolean as return value
+    // success: *mut bool,
+) {
+    use ptx_support::prelude::*;
+
+    let n = n as isize;
+    let i = i as isize;
+    let x =
+        (Context::thread().index().x + Context::block().index().x * block_dim_x as u64) as isize;
+    let y =
+        (Context::thread().index().y + Context::block().index().y * block_dim_y as u64) as isize;
+
+    if x < n && y < n {
+        if (x != i) {
+            if y == i {
+                *mat_a.offset(x * n + y) = 0f32;
+            }
+        }
+    }
+}
 
 fn main() {}
